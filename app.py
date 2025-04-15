@@ -21,7 +21,7 @@ pdf_texts = [extract_pdf_text(pdf_file) for pdf_file in pdf_files]
 db = initialize_vector_store(website_contents + pdf_texts)
 chain = setup_retrieval_qa(db)
 
-API_KEY = "749c29947d019f3ae1fe20c588062113"  # Replace with your OpenWeatherMap API Key
+API_KEY = "******"  # Replace with your OpenWeatherMap API Key
 
 def store_farmer_to_db(data):
     conn = sqlite3.connect("farmers.db")
