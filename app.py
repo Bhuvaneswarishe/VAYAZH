@@ -9,8 +9,8 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from sentence_transformers import SentenceTransformer
 
 # Milvus Config
-MILVUS_URI = "https://in03-c3450588c0a2321.serverless.aws-eu-central-1.cloud.zilliz.com"
-MILVUS_TOKEN = "5d587a55df90f60547f33af66bf12f2f6a46ea97dce29b3ad5067bd30e9c097daf648c22b860d4bca4fa8ce85540434beee6cbef"
+MILVUS_URI = "..." # your token name
+MILVUS_TOKEN = ".."
 COLLECTION_NAME = "vayazh"
 
 app = Flask(__name__)
@@ -275,3 +275,4 @@ def fetch_forecast():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
