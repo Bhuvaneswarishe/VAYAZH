@@ -35,3 +35,7 @@ OpenWeatherMap API Key for weather updates
 Groq - llama model for Ai Generation
 
 
+Demo:
+<img width="1353" height="649" alt="image" src="https://github.com/user-attachments/assets/ceedc289-0f3a-44c6-9073-54fab2939327" />
+
+
