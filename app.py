@@ -1,28 +1,52 @@
 from flask import Flask, render_template, request, jsonify
-from chat1 import fetch_website_content, extract_pdf_text, initialize_vector_store
 from chat2 import llm, setup_retrieval_qa
 import os
 import requests
 import sqlite3
 from database import create_tables
+from langchain_community.vectorstores import Milvus
+from langchain_huggingface import HuggingFaceEmbeddings
+from sentence_transformers import SentenceTransformer
+
+# Milvus Config
+MILVUS_URI = "https://in03-c3450588c0a2321.serverless.aws-eu-central-1.cloud.zilliz.com"
+MILVUS_TOKEN = "5d587a55df90f60547f33af66bf12f2f6a46ea97dce29b3ad5067bd30e9c097daf648c22b860d4bca4fa8ce85540434beee6cbef"
+COLLECTION_NAME = "vayazh"
 
 app = Flask(__name__)
 create_tables()
 
-# Example URLs and PDF files
-urls = ["https://mospi.gov.in/4-agricultural-statistics"]
-pdf_files = ["Farming Schemes (1).pdf", "farmerbook (1).pdf"]
+# ✅ Connect to existing Milvus collection
+def get_milvus_vector_store():
+    try:
+        model_path = "sentence-transformers/all-mpnet-base-v2"  # ✅ ensure same model (768 dims)
+        _ = SentenceTransformer(model_path)
 
-# Fetch content from websites
-website_contents = [fetch_website_content(url) for url in urls]
-pdf_texts = [extract_pdf_text(pdf_file) for pdf_file in pdf_files]
+        embedding_function = HuggingFaceEmbeddings(model_name=model_path)
 
-# Initialize the vector store
-db = initialize_vector_store(website_contents + pdf_texts)
+        print("✅ Connecting to Milvus collection:", COLLECTION_NAME)
+        db = Milvus(
+            embedding_function,
+            collection_name=COLLECTION_NAME,
+            connection_args={
+                "uri": MILVUS_URI,
+                "token": MILVUS_TOKEN
+            },
+            text_field="text",
+            vector_field="embedding"
+        )
+        return db
+    except Exception as e:
+        print("❌ Error connecting to Milvus:", str(e))
+        raise e
+
+# ✅ Get DB connection
+db = get_milvus_vector_store()
 chain = setup_retrieval_qa(db)
 
-API_KEY = "******"  # Replace with your OpenWeatherMap API Key
+API_KEY = "d91a58b4ef77f5f11498e31e4ad2d756"  # Replace with your OpenWeatherMap API Key
 
+# ---------------- Farmer DB Functions ----------------
 def store_farmer_to_db(data):
     conn = sqlite3.connect("farmers.db")
     cursor = conn.cursor()
@@ -60,34 +84,74 @@ def store_chat_history(farmer_id, question, answer):
     conn.commit()
     conn.close()
 
-def get_weather(location):
-    url = f"http://api.openweathermap.org/data/2.5/weather?q={location}&appid={API_KEY}&units=metric"
-    try:
-        response = requests.get(url)
-        data = response.json()
-        if data["cod"] != 200:
-            return "❌ Error: " + data.get("message", "Unable to fetch weather."), None
+# ---------------- Weather Functions ----------------
+def get_weather_by_latlon(lat, lon):
+    url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
+    response = requests.get(url)
+    return response.json()
 
-        weather_data = {
-            "description": data["weather"][0]["description"].capitalize(),
-            "temp": data["main"]["temp"],
-            "humidity": data["main"]["humidity"],
-            "wind_speed": data["wind"]["speed"]
-        }
+def get_weather_by_city(city):
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city},IN&appid={API_KEY}&units=metric"
+    response = requests.get(url)
+    return response.json()
 
-        weather_info = (
-            f"🌦️ **Weather in {location.capitalize()}**:\n"
-            f"- Condition: {weather_data['description']}\n"
-            f"- Temperature: {weather_data['temp']}°C\n"
-            f"- Humidity: {weather_data['humidity']}%\n"
-            f"- Wind Speed: {weather_data['wind_speed']} m/s"
-        )
+def parse_weather_response(data, location=""):
+    if data.get("cod") != 200:
+        return "❌ Error: " + data.get("message", "Unable to fetch weather."), None
 
-        return weather_info, weather_data
+    weather_data = {
+        "description": data["weather"][0]["description"].capitalize(),
+        "temp": data["main"]["temp"],
+        "humidity": data["main"]["humidity"],
+        "wind_speed": data["wind"]["speed"]
+    }
 
-    except Exception as e:
-        return "❌ Error fetching weather data.", None
+    weather_info = (
+        f"🌦️ **Weather in {location if location else 'your area'}**:\n"
+        f"- Condition: {weather_data['description']}\n"
+        f"- Temperature: {weather_data['temp']}°C\n"
+        f"- Humidity: {weather_data['humidity']}%\n"
+        f"- Wind Speed: {weather_data['wind_speed']} m/s"
+    )
+    return weather_info, weather_data
 
+def get_forecast_by_latlon(lat, lon):
+    url = f"http://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
+    response = requests.get(url)
+    return response.json()
+
+def get_forecast_by_city(city):
+    url = f"http://api.openweathermap.org/data/2.5/forecast?q={city},IN&appid={API_KEY}&units=metric"
+    response = requests.get(url)
+    return response.json()
+
+def parse_forecast_response(data, location=""):
+    if data.get("cod") != "200":
+        return "❌ Error: " + data.get("message", "Unable to fetch forecast."), None
+
+    forecast_summary = {}
+    for item in data["list"]:
+        date = item["dt_txt"].split()[0]
+        temp = item["main"]["temp"]
+        condition = item["weather"][0]["description"]
+
+        if date not in forecast_summary:
+            forecast_summary[date] = {"temps": [], "conditions": []}
+
+        forecast_summary[date]["temps"].append(temp)
+        forecast_summary[date]["conditions"].append(condition)
+
+    summary_lines = []
+    for i, (date, details) in enumerate(forecast_summary.items()):
+        if i >= 3: break
+        avg_temp = round(sum(details["temps"]) / len(details["temps"]), 1)
+        most_common_condition = max(set(details["conditions"]), key=details["conditions"].count)
+        summary_lines.append(f"📅 {date}: {avg_temp}°C, {most_common_condition.capitalize()}")
+
+    forecast_text = "\n".join(summary_lines)
+    return f"📈 **3-Day Forecast for {location if location else 'your area'}**\n{forecast_text}", forecast_summary
+
+# ---------------- Personalized Prompt ----------------
 def prepare_personalized_prompt(query, farmer_details, weather_data):
     context = []
 
@@ -110,6 +174,7 @@ def prepare_personalized_prompt(query, farmer_details, weather_data):
 
     return f"{' '.join(context)}\nQuery: {query}"
 
+# ---------------- Flask Routes ----------------
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -131,9 +196,15 @@ def ask():
 
     farmer_details = get_farmer_details()
     location = farmer_details.get("location", "")
-    weather_info, weather_data = get_weather(location) if location else ("Weather data not available.", None)
+
+    # Weather (fallback: lat/lon → city)
+    weather_info, weather_data = ("Weather data not available.", None)
+    if location:
+        data = get_weather_by_city(location)
+        weather_info, weather_data = parse_weather_response(data, location)
 
     personalized_query = prepare_personalized_prompt(query, farmer_details, weather_data)
+
     response = chain.invoke({"query": personalized_query})
 
     final_answer = response['result'] if response and response['result'].strip().lower() not in ["don't know.", "i don't know"] else \
@@ -154,6 +225,7 @@ def store_farmer_details():
         return jsonify({"message": "Farm details saved successfully."})
     except Exception as e:
         return jsonify({"message": f"Error saving farm details: {str(e)}"}), 500
+
 @app.route('/chat_history')
 def view_chat_history():
     conn = sqlite3.connect("farmers.db")
@@ -165,35 +237,41 @@ def view_chat_history():
     conn.close()
     return jsonify({"chat_history": rows})
 
-
 @app.route('/get_weather', methods=['POST'])
 def fetch_weather():
     data = request.json
+    lat = data.get("lat")
+    lon = data.get("lon")
     location = data.get("location", "").strip() or get_farmer_details().get("location", "")
 
-    if not location:
-        return jsonify({"answer": "❌ Please provide a location."})
-
-    weather_response, weather_data = get_weather(location)
-
-    if weather_data:
-        temp = weather_data["temp"]
-        humidity = weather_data["humidity"]
-
-        advice = []
-        if temp > 30:
-            advice.append("🚜 **Farm Advice**: High temperatures detected. Consider increasing irrigation and shading crops.")
-        elif temp < 10:
-            advice.append("🚜 **Farm Advice**: Cold temperatures detected. Protect crops from frost and reduce irrigation.")
-
-        if humidity > 80:
-            advice.append("High humidity increases disease risk. Monitor for fungal infections and improve ventilation.")
-        elif humidity < 30:
-            advice.append("Low humidity may cause water stress. Consider mulching to retain soil moisture.")
-
-        weather_response += "\n\n" + "\n".join(advice)
+    if lat and lon:
+        data = get_weather_by_latlon(lat, lon)
+        weather_response, weather_data = parse_weather_response(data)
+    elif location:
+        data = get_weather_by_city(location)
+        weather_response, weather_data = parse_weather_response(data, location)
+    else:
+        return jsonify({"answer": "❌ Please provide a location or enable GPS."})
 
     return jsonify({"answer": weather_response, "weatherData": weather_data})
+
+@app.route('/get_forecast', methods=['POST'])
+def fetch_forecast():
+    data = request.json
+    lat = data.get("lat")
+    lon = data.get("lon")
+    location = data.get("location", "").strip() or get_farmer_details().get("location", "")
+
+    if lat and lon:
+        data = get_forecast_by_latlon(lat, lon)
+        forecast_response, forecast_data = parse_forecast_response(data)
+    elif location:
+        data = get_forecast_by_city(location)
+        forecast_response, forecast_data = parse_forecast_response(data, location)
+    else:
+        return jsonify({"answer": "❌ Please provide a location or enable GPS."})
+
+    return jsonify({"answer": forecast_response, "forecastData": forecast_data})
 
 if __name__ == "__main__":
     app.run(debug=True)
