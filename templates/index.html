@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vayazh AI - Agricultural Assistant</title>
+    <title>🌾 Vayazh - AI Agriculture Assistant</title>
     <style>
         :root {
             --primary-color: #2c8a3d;
             --primary-light: #3ca24f;
             --secondary-color: #1a5924;
-            --bg-dark: #ffffff;  /* Changed from #121212 to white */
-            --bg-light: #f5f5f5;  /* Changed from #1e1e1e to light gray */
-            --sidebar-bg: #f0f0f0;  /* Changed from #141414 to lighter gray */
-            --text-color: #333333;  /* Changed from #ffffff to dark gray */
-            --text-secondary: #666666;  /* Changed from #b0b0b0 to medium gray */
+            --user-bg: #007bff;
+            --bot-bg: #28a745;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
             --border-radius: 12px;
             --transition: all 0.3s ease;
         }
@@ -22,238 +25,242 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            background-color: var(--bg-dark);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
             color: var(--text-color);
-            overflow: hidden;
-            height: 100vh;
+            line-height: 1.6;
         }
 
         .app-container {
-            display: flex;
+            display: grid;
+            grid-template-columns: 350px 1fr;
             height: 100vh;
+            gap: 0;
         }
 
-        /* Sidebar Styles */
+        /* Sidebar */
         .sidebar {
-            width: 300px;
-            background-color: var(--sidebar-bg);
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            transition: var(--transition);
             overflow: hidden;
-            border-right: 1px solid rgba(0, 0, 0, 0.1);  /* Changed from white to black with reduced opacity */
         }
 
         .sidebar-header {
             padding: 20px;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);  /* Changed from white to black with reduced opacity */
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
         }
 
-        .sidebar-header .logo {
-            color: var(--primary-color);
-            font-size: 1.5rem;
+        .sidebar-title {
+            font-size: 1.4rem;
             font-weight: bold;
-            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .sidebar-content {
             flex: 1;
+            padding: 20px;
             overflow-y: auto;
-            padding: 10px;
         }
 
-        .sidebar-tabs {
-            display: flex;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);  /* Changed from white to black with reduced opacity */
+        /* Weather Section */
+        .weather-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
             margin-bottom: 15px;
-        }
-
-        .sidebar-tab {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            position: relative;
-            transition: var(--transition);
-        }
-
-        .sidebar-tab.active {
             color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .sidebar-tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background-color: var(--primary-color);
+        .weather-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        .tab-content {
-            display: none;
+        .city-input-group {
+            display: flex;
+            gap: 8px;
         }
 
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Farm Details Form */
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: var(--text-secondary);
+        .city-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
             font-size: 0.9rem;
         }
 
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(0, 0, 0, 0.2);  /* Changed from white to black with reduced opacity */
-            background-color: rgba(255, 255, 255, 0.9);  /* Changed to white with opacity */
-            color: var(--text-color);
-            transition: var(--transition);
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(44, 138, 61, 0.2);
-        }
-
-        .save-btn {
-            background-color: var(--primary-color);
-            color: white;
+        .weather-btn {
+            padding: 10px 15px;
             border: none;
             border-radius: 8px;
-            padding: 12px;
-            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
             cursor: pointer;
-            font-weight: 600;
+            font-size: 0.9rem;
+            font-weight: 500;
             transition: var(--transition);
-            margin-top: 10px;
-        }
-
-        .save-btn:hover {
-            background-color: var(--secondary-color);
-            transform: translateY(-2px);
-        }
-
-        /* Chat History */
-        .chat-history-item {
-            padding: 10px;
-            margin-bottom: 10px;
-            background-color: rgba(0, 0, 0, 0.05);  /* Changed from white to black with reduced opacity */
-            border-radius: 8px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .chat-history-item:hover {
-            background-color: rgba(0, 0, 0, 0.1);  /* Changed from white to black with reduced opacity */
-        }
-
-        .chat-history-item .question {
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: var(--text-color);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chat-history-item .answer {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Weather Widget */
-        .weather-widget {
-            padding: 15px;
-            background-color: rgba(44, 138, 61, 0.1);
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .weather-widget h3 {
             display: flex;
             align-items: center;
             gap: 5px;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
+            justify-content: center;
         }
 
-        .weather-info {
+        .weather-btn:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .weather-btn.secondary {
+            background-color: var(--secondary-color);
+        }
+
+        .weather-btn.forecast {
+            background-color: #6f42c1;
+        }
+
+        .weather-btn.forecast:hover {
+            background-color: #5a2d91;
+        }
+
+        /* Weather Display Widget */
+        #weatherDisplay {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            display: none;
+        }
+
+        .weather-main {
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
 
         .weather-temp {
-            font-size: 1.5rem;
+            font-size: 2.5rem;
             font-weight: bold;
         }
 
+        .weather-icon {
+            font-size: 3rem;
+        }
+
         .weather-desc {
-            font-size: 0.85rem;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .weather-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Forecast Display Widget */
+        #forecastDisplay {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .forecast-cards {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .forecast-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            min-width: 100px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            flex-shrink: 0;
+        }
+
+        .forecast-date {
+            font-size: 0.8rem;
             color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .forecast-icon {
+            font-size: 2rem;
+            margin: 5px 0;
+        }
+
+        .forecast-temp {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .forecast-condition {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
         }
 
         /* Main Chat Area */
         .main-content {
-            flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            background-color: var(--bg-color);
         }
 
         .chat-header {
+            background-color: var(--card-bg);
             padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);  /* Changed from white to black with reduced opacity */
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .chat-title {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 600;
+            color: var(--primary-color);
         }
 
-        .chat-container {
+        #chatBox {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
+            gap: 15px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         }
 
         .message {
-            max-width: 80%;
+            max-width: 70%;
             padding: 12px 16px;
-            margin-bottom: 15px;
-            border-radius: 10px;
+            border-radius: 18px;
             position: relative;
             animation: fadeIn 0.3s ease;
             line-height: 1.5;
+            word-wrap: break-word;
         }
 
         @keyframes fadeIn {
@@ -262,30 +269,36 @@
         }
 
         .user-message {
-            background-color: var(--primary-color);
+            background-color: var(--user-bg);
+            color: white;
             align-self: flex-end;
-            border-radius: 10px 10px 0 10px;
-            color: white;  /* Added to ensure text is visible on colored background */
+            border-bottom-right-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.3);
         }
 
         .bot-message {
-            background-color: var(--bg-light);
+            background-color: var(--bot-bg);
+            color: white;
             align-self: flex-start;
-            border-radius: 10px 10px 10px 0;
+            border-bottom-left-radius: 6px;
+            box-shadow: 0 2px 8px rgba(40,167,69,0.3);
         }
 
         .loading-animation {
             display: none;
             align-self: flex-start;
-            background-color: var(--bg-light);
+            background-color: var(--card-bg);
             padding: 15px;
-            border-radius: 10px 10px 10px 0;
+            border-radius: 18px;
+            border-bottom-left-radius: 6px;
             margin-bottom: 15px;
+            box-shadow: var(--shadow);
         }
 
         .typing-indicator {
             display: flex;
             align-items: center;
+            gap: 4px;
         }
 
         .typing-dot {
@@ -293,7 +306,6 @@
             height: 8px;
             background-color: var(--text-secondary);
             border-radius: 50%;
-            margin: 0 2px;
             animation: dotPulse 1.5s infinite;
         }
 
@@ -312,54 +324,46 @@
 
         /* Input Area */
         .input-container {
-            padding: 15px 20px;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);  /* Changed from white to black with reduced opacity */
+            padding: 20px;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .input-form {
             display: flex;
-            align-items: center;
             gap: 10px;
-        }
-
-        .input-box {
-            flex: 1;
-            border-radius: 18px;
-            background-color: var(--bg-light);
-            display: flex;
             align-items: center;
-            padding: 0 15px;
-            border: 1px solid rgba(0, 0, 0, 0.1);  /* Changed from white to black with reduced opacity */
-            transition: var(--transition);
-        }
-
-        .input-box:focus-within {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(44, 138, 61, 0.2);
         }
 
         .input-field {
             flex: 1;
-            padding: 12px 0;
-            background: transparent;
-            border: none;
-            color: var(--text-color);
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 25px;
             font-size: 1rem;
+            background-color: var(--bg-color);
+            transition: var(--transition);
         }
 
         .input-field:focus {
             outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(44, 138, 61, 0.1);
         }
 
         .send-btn {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             background-color: var(--primary-color);
             border: none;
             color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: var(--transition);
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: var(--transition);
         }
 
         .send-btn:hover {
@@ -369,17 +373,16 @@
 
         /* Quick Suggestions */
         .quick-suggestions {
+            padding: 0 20px 15px;
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-bottom: 15px;
-            padding: 0 20px;
         }
 
         .suggestion-chip {
-            background-color: rgba(0, 0, 0, 0.05);  /* Changed from white to black with reduced opacity */
-            border: 1px solid rgba(0, 0, 0, 0.1);  /* Changed from white to black with reduced opacity */
-            border-radius: 16px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
             padding: 8px 12px;
             font-size: 0.85rem;
             cursor: pointer;
@@ -390,145 +393,264 @@
         }
 
         .suggestion-chip:hover {
-            background-color: rgba(44, 138, 61, 0.15);
-            border-color: rgba(44, 138, 61, 0.3);
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
         }
 
         /* Responsive Design */
         @media (max-width: 768px) {
             .app-container {
-                flex-direction: column;
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
             }
 
             .sidebar {
-                width: 100%;
-                height: 60px;
-                position: fixed;
-                bottom: 0;
-                z-index: 10;
-                border-top: 1px solid rgba(0, 0, 0, 0.1);  /* Changed from white to black with reduced opacity */
                 border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                max-height: 40vh;
             }
 
-            .sidebar.expanded {
-                height: 80vh;
+            .sidebar-content {
+                padding: 15px;
             }
 
+            .weather-controls {
+                flex-direction: column;
+            }
+
+            .forecast-cards {
+                justify-content: center;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+
+            .quick-suggestions {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
             .sidebar-header {
-                padding: 10px 20px;
-                justify-content: space-between;
+                padding: 15px;
             }
 
-            .main-content {
-                margin-bottom: 60px;
+            .sidebar-title {
+                font-size: 1.2rem;
             }
 
-            .sidebar-toggle {
-                display: block;
+            .chat-header {
+                padding: 15px;
             }
 
-            .chat-container {
+            .input-container {
                 padding: 15px;
             }
 
             .message {
                 max-width: 90%;
+                padding: 10px 14px;
             }
+        }
+
+        /* Farm Details Form Styles */
+        .farm-details-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(44, 138, 61, 0.1);
+        }
+
+        .form-input:invalid {
+            border-color: #dc3545;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .save-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .save-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Success/Error Notifications */
+        .notification {
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .notification.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .notification.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f1aeb5;
+        }
+
+        /* Error and Success States */
+        .error-message {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .success-message {
+            background-color: #28a745;
+            color: white;
+        }
+
+        /* Loading state for buttons */
+        .weather-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-    <!-- Rest of the HTML remains unchanged -->
-</body>
-</html>
-<body>
     <div class="app-container">
         <!-- Sidebar -->
-        <div class="sidebar" id="sidebar">
+        <div class="sidebar">
             <div class="sidebar-header">
-                <div class="logo">🌱 Vayazh AI</div>
-                <button class="sidebar-toggle" id="sidebarToggle" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; display: none;">
-                    <span>≡</span>
-                </button>
+                <div class="sidebar-title">🌾 Vayazh AI</div>
             </div>
             <div class="sidebar-content">
-                <div class="sidebar-tabs">
-                    <div class="sidebar-tab active" data-tab="farm-details">Farm Details</div>
-                    <div class="sidebar-tab" data-tab="chat-history">Chat History</div>
-                </div>
-                
-                <!-- Farm Details Tab -->
-                <div class="tab-content active" id="farm-details-tab">
-                    <div id="weatherDisplay" class="weather-widget" style="display: none;">
-                        <h3>☁️ Weather Updates</h3>
-                        <div class="weather-info">
-                            <div class="weather-details">
-                                <div class="weather-temp">--°C</div>
-                                <div class="weather-desc">--</div>
-                            </div>
-                            <div class="weather-icon">☁️</div>
-                        </div>
+                <!-- Farm Details Section -->
+                <div class="farm-details-section">
+                    <div class="section-title">🚜 Farm Details</div>
+                    
+                    <!-- Notification area -->
+                    <div id="farmNotification" class="notification"></div>
+                    
+                    <div class="form-group">
+                        <label for="landSize">Land Size (acres)</label>
+                        <input type="number" id="landSize" class="form-input" placeholder="Enter land size" min="0" step="0.1">
                     </div>
                     
                     <div class="form-group">
-                        <label for="location">Farm Location</label>
-                        <input type="text" id="location" placeholder="Enter your location">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="land-size">Land Size (acres)</label>
-                        <input type="number" id="land-size" placeholder="Enter land size" min="0" step="0.1">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="soil-type">Soil Type</label>
-                        <select id="soil-type">
+                        <label for="soilType">Soil Type</label>
+                        <select id="soilType" class="form-input">
                             <option value="">Select soil type</option>
-                            <option>Loamy</option>
-                            <option>Sandy</option>
-                            <option>Clay</option>
-                            <option>Silt</option>
-                            <option>Black</option>
-                            <option>Red</option>
-                            <option>Alluvial</option>
+                            <option value="Black">Black</option>
+                            <option value="Red">Red</option>
+                            <option value="Alluvial">Alluvial</option>
+                            <option value="Loamy">Loamy</option>
+                            <option value="Sandy">Sandy</option>
+                            <option value="Clay">Clay</option>
+                            <option value="Silt">Silt</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="irrigation">Irrigation Method</label>
-                        <select id="irrigation">
+                        <label for="irrigationMethod">Irrigation Method</label>
+                        <select id="irrigationMethod" class="form-input">
                             <option value="">Select irrigation method</option>
-                            <option>Drip</option>
-                            <option>Sprinkler</option>
-                            <option>Surface</option>
-                            <option>Flood</option>
-                            <option>Furrow</option>
-                            <option>Basin</option>
-                            <option>Rainfed</option>
+                            <option value="Rainfed">Rainfed</option>
+                            <option value="Drip">Drip</option>
+                            <option value="Sprinkler">Sprinkler</option>
+                            <option value="Surface">Surface</option>
+                            <option value="Flood">Flood</option>
+                            <option value="Furrow">Furrow</option>
+                            <option value="Basin">Basin</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="water-source">Water Source</label>
-                        <select id="water-source">
+                        <label for="waterSource">Water Source</label>
+                        <select id="waterSource" class="form-input">
                             <option value="">Select water source</option>
-                            <option>Well</option>
-                            <option>Pond</option>
-                            <option>River</option>
-                            <option>Rainwater</option>
-                            <option>Canal</option>
-                            <option>Groundwater</option>
-                            <option>Reservoir</option>
+                            <option value="Rainwater">Rainwater</option>
+                            <option value="Well">Well</option>
+                            <option value="Pond">Pond</option>
+                            <option value="River">River</option>
+                            <option value="Canal">Canal</option>
+                            <option value="Groundwater">Groundwater</option>
+                            <option value="Reservoir">Reservoir</option>
                         </select>
                     </div>
                     
                     <button class="save-btn" onclick="saveFarmDetails()">Save Details</button>
-                    <button class="save-btn" style="margin-top: 10px; background-color: var(--bg-light);" onclick="getWeather()">Update Weather</button>
                 </div>
-                
-                <!-- Chat History Tab -->
-                <div class="tab-content" id="chat-history-tab">
-                    <div id="chatHistoryList"></div>
+
+                <!-- Weather Section -->
+                <div class="weather-section">
+                    <div class="section-title">🌤️ Weather Tools</div>
+                    
+                    <div class="weather-controls">
+                        <div class="city-input-group">
+                            <input type="text" id="cityInput" class="city-input" placeholder="Enter city name...">
+                            <button class="weather-btn" onclick="getWeather()">Get Weather</button>
+                        </div>
+                        
+                        <button class="weather-btn secondary" onclick="getLocation()">
+                            🌍 Get Weather by Location
+                        </button>
+                        
+                        <button class="weather-btn forecast" onclick="getForecast()">
+                            📈 Get 3-Day Forecast
+                        </button>
+                    </div>
+
+                    <!-- Weather Display Widget -->
+                    <div id="weatherDisplay"></div>
+
+                    <!-- Forecast Display Widget -->
+                    <div id="forecastDisplay"></div>
                 </div>
             </div>
         </div>
@@ -536,12 +658,12 @@
         <!-- Main Chat Area -->
         <div class="main-content">
             <div class="chat-header">
-                <div class="chat-title">Agricultural Assistant</div>
+                <div class="chat-title">🌱 Agricultural Assistant</div>
             </div>
             
-            <div class="chat-container" id="chatBox">
+            <div id="chatBox">
                 <div class="message bot-message">
-                    Hello! I'm your agricultural assistant. How can I help you today? 🌱
+                    Hello! I'm your AI agricultural assistant. I can help you with farming advice, crop recommendations, weather information, and more. How can I assist you today? 🌾
                 </div>
                 
                 <div class="loading-animation" id="loadingContainer">
@@ -554,89 +676,218 @@
             </div>
             
             <div class="quick-suggestions">
-                <div class="suggestion-chip" onclick="sendQuickMessage('Suitable crops')">🌾 Suitable crops</div>
-                <div class="suggestion-chip" onclick="sendQuickMessage('Soil fertility tips')">🌱 Soil fertility</div>
-                <div class="suggestion-chip" onclick="sendQuickMessage('Irrigation advice')">💧 Irrigation</div>
-                <div class="suggestion-chip" onclick="sendQuickMessage('Organic pest control')">🐞 Pest control</div>
-                <div class="suggestion-chip" onclick="sendQuickMessage('Seasonal crops')">🌿 Seasonal crops</div>
-                <div class="suggestion-chip" onclick="requestFarmSpecificAdvice()">🚜 Farm advice</div>
+                <div class="suggestion-chip" onclick="sendQuickMessage('What crops are suitable for my region?')">
+                    🌾 Crop recommendations
+                </div>
+                <div class="suggestion-chip" onclick="sendQuickMessage('How to improve soil fertility?')">
+                    🌱 Soil fertility
+                </div>
+                <div class="suggestion-chip" onclick="sendQuickMessage('Best irrigation practices')">
+                    💧 Irrigation tips
+                </div>
+                <div class="suggestion-chip" onclick="sendQuickMessage('Organic pest control methods')">
+                    🐛 Pest control
+                </div>
+                <div class="suggestion-chip" onclick="sendQuickMessage('When to plant seasonal crops?')">
+                    📅 Planting schedule
+                </div>
+                <div class="suggestion-chip" onclick="requestPersonalizedAdvice()">
+                    🎯 Personalized advice
+                </div>
             </div>
             
             <div class="input-container">
-                <div class="input-box">
-                    <input type="text" class="input-field" id="userInput" placeholder="Ask about farming, crops, or agricultural practices...">
+                <div class="input-form">
+                    <input type="text" class="input-field" id="userInput" placeholder="Ask about farming, crops, weather, or agricultural practices...">
+                    <button class="send-btn" onclick="sendMessage()">➤</button>
                 </div>
-                <button class="send-btn" onclick="sendMessage()">➤</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Store weather data for context in future queries
+        // Global variables
         let currentWeatherData = null;
+        let currentLocation = { lat: null, lon: null, city: null };
+        let currentFarmDetails = null;
 
-        // Wait for DOM to fully load
+        // Wait for DOM to load
         document.addEventListener('DOMContentLoaded', function() {
-            // Load tab functionality
-            initTabs();
-            
-            // Handle sidebar toggle on mobile
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.getElementById('sidebar');
-            
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('expanded');
-                });
-            }
-            
-            // Load farm details from local storage
-            tryLoadSavedFarmDetails();
-            
-            // Load chat history
-            loadChatHistory();
-            
             // Auto-focus input field
             document.getElementById('userInput').focus();
+            
+            // Add enter key support for inputs
+            document.getElementById('userInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            document.getElementById('cityInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    getWeather();
+                }
+            });
+
+            // Load any saved farm details
+            loadSavedFarmDetails();
+            
+            // Setup form validation listeners
+            setupValidationListeners();
         });
 
-        // Tab functionality
-        function initTabs() {
-            const tabs = document.querySelectorAll('.sidebar-tab');
+        // Farm Details Functions
+        function showNotification(message, isSuccess = true) {
+            const notification = document.getElementById('farmNotification');
+            notification.textContent = message;
+            notification.className = `notification ${isSuccess ? 'success' : 'error'}`;
+            notification.style.display = 'block';
             
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    // Remove active class from all tabs
-                    tabs.forEach(t => t.classList.remove('active'));
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+
+        function validateFarmDetails() {
+            const requiredFields = ['landSize', 'soilType', 'irrigationMethod', 'waterSource'];
+            let isValid = true;
+            
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                const value = field.value.trim();
+                
+                if (!value) {
+                    field.style.borderColor = '#dc3545';
+                    isValid = false;
+                } else {
+                    field.style.borderColor = '';
+                }
+            });
+            
+            return isValid;
+        }
+
+        async function saveFarmDetails() {
+            if (!validateFarmDetails()) {
+                showNotification('Please fill in all required fields', false);
+                return;
+            }
+
+            const saveBtn = event.target;
+            const originalText = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '💾 Saving...';
+
+            const farmDetails = {
+                location: "Default Location", // Will be handled by backend
+                landSize: parseFloat(document.getElementById('landSize').value),
+                soilType: document.getElementById('soilType').value,
+                irrigationMethod: document.getElementById('irrigationMethod').value,
+                waterSource: document.getElementById('waterSource').value
+            };
+
+            try {
+                const response = await fetch('/store_farmer_details', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(farmDetails)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentFarmDetails = farmDetails;
+                    showNotification(data.message || 'Farm details saved successfully!');
                     
-                    // Add active class to clicked tab
-                    this.classList.add('active');
+                    // Also save to local storage for persistence
+                    localStorage.setItem('farmDetails', JSON.stringify(farmDetails));
                     
-                    // Hide all tab content
-                    document.querySelectorAll('.tab-content').forEach(content => {
-                        content.classList.remove('active');
-                    });
+                    // Add success message to chat
+                    addMessage('✅ Farm details updated successfully! I can now provide personalized recommendations based on your farm profile.', false);
+                } else {
+                    showNotification(data.message || 'Error saving farm details', false);
+                }
+                
+            } catch (error) {
+                showNotification('Error connecting to server. Please try again.', false);
+                console.error('Save Farm Details Error:', error);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+            }
+        }
+
+        function loadSavedFarmDetails() {
+            try {
+                const saved = localStorage.getItem('farmDetails');
+                if (saved) {
+                    const details = JSON.parse(saved);
+                    currentFarmDetails = details;
                     
-                    // Show related tab content
-                    const tabId = this.getAttribute('data-tab') + '-tab';
-                    document.getElementById(tabId).classList.add('active');
+                    // Populate form fields (excluding location)
+                    document.getElementById('landSize').value = details.landSize || '';
+                    document.getElementById('soilType').value = details.soilType || '';
+                    document.getElementById('irrigationMethod').value = details.irrigationMethod || '';
+                    document.getElementById('waterSource').value = details.waterSource || '';
+                }
+            } catch (error) {
+                console.error('Error loading saved farm details:', error);
+            }
+        }
+
+        // Clear validation errors on input
+        function setupValidationListeners() {
+            const formInputs = document.querySelectorAll('.form-input');
+            formInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    this.style.borderColor = '';
                 });
             });
         }
 
+        // Wait for DOM to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-focus input field
+            document.getElementById('userInput').focus();
+            
+            // Add enter key support for inputs
+            document.getElementById('userInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            document.getElementById('cityInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    getWeather();
+                }
+            });
+        });
+
         // Utility Functions
         function showLoading() {
             document.getElementById('loadingContainer').style.display = 'flex';
+            scrollToBottom();
         }
 
         function hideLoading() {
             document.getElementById('loadingContainer').style.display = 'none';
         }
 
-        function addMessage(message, isUser = false) {
+        function scrollToBottom() {
+            const chatBox = document.getElementById('chatBox');
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function addMessage(message, isUser = false, isError = false) {
             const chatBox = document.getElementById('chatBox');
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            let className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            if (isError) className += ' error-message';
+            
+            messageDiv.className = className;
             
             // Convert markdown-like formatting to HTML
             const formattedMessage = message
@@ -645,80 +896,265 @@
             
             messageDiv.innerHTML = formattedMessage;
             chatBox.appendChild(messageDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            scrollToBottom();
         }
 
-        // Store farm details in local storage for persistence
-        function storeFarmDetailsLocally(details) {
-            localStorage.setItem('farmDetails', JSON.stringify(details));
+        function getWeatherIcon(description) {
+            const desc = description.toLowerCase();
+            
+            if (desc.includes('rain') || desc.includes('drizzle')) return '🌧️';
+            if (desc.includes('thunder') || desc.includes('storm')) return '⛈️';
+            if (desc.includes('snow')) return '❄️';
+            if (desc.includes('cloud') || desc.includes('overcast')) return '☁️';
+            if (desc.includes('clear') || desc.includes('sun')) return '☀️';
+            if (desc.includes('mist') || desc.includes('fog')) return '🌫️';
+            if (desc.includes('wind')) return '💨';
+            
+            return '🌤️'; // Default
         }
 
-        // Try to load farm details from local storage
-        function tryLoadSavedFarmDetails() {
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const options = { month: 'short', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        // Weather Functions
+        async function getWeather() {
+            const cityInput = document.getElementById('cityInput');
+            const city = cityInput.value.trim();
+            
+            if (!city) {
+                addMessage('Please enter a city name first.', false, true);
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+
             try {
-                const savedDetails = localStorage.getItem('farmDetails');
-                if (savedDetails) {
-                    const details = JSON.parse(savedDetails);
-                    document.getElementById('location').value = details.location || '';
-                    document.getElementById('land-size').value = details.landSize || '';
-                    document.getElementById('soil-type').value = details.soilType || '';
-                    document.getElementById('irrigation').value = details.irrigationMethod || '';
-                    document.getElementById('water-source').value = details.waterSource || '';
+                addMessage(`Getting weather for ${city}...`, true);
+                showLoading();
+
+                const response = await fetch('/get_weather', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ location: city })
+                });
+
+                const data = await response.json();
+                hideLoading();
+
+                if (data.weatherData) {
+                    currentWeatherData = data.weatherData;
+                    currentLocation.city = city;
+                    updateWeatherWidget(data.weatherData, city);
                 }
+
+                addMessage(data.answer);
+                
             } catch (error) {
-                console.error('Error loading saved farm details:', error);
+                hideLoading();
+                addMessage('Error fetching weather data. Please try again.', false, true);
+                console.error('Weather API Error:', error);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Get Weather';
             }
         }
 
-        // API Interaction Functions
+        async function getLocation() {
+            if (!navigator.geolocation) {
+                addMessage('Geolocation is not supported by this browser.', false, true);
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = 'Getting location...';
+
+            navigator.geolocation.getCurrentPosition(
+                async function(position) {
+                    try {
+                        currentLocation.lat = position.coords.latitude;
+                        currentLocation.lon = position.coords.longitude;
+
+                        addMessage('Getting weather for your location...', true);
+                        showLoading();
+
+                        const response = await fetch('/get_weather', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                lat: position.coords.latitude,
+                                lon: position.coords.longitude
+                            })
+                        });
+
+                        const data = await response.json();
+                        hideLoading();
+
+                        if (data.weatherData) {
+                            currentWeatherData = data.weatherData;
+                            updateWeatherWidget(data.weatherData, 'Your Location');
+                        }
+
+                        addMessage(data.answer);
+                        
+                    } catch (error) {
+                        hideLoading();
+                        addMessage('Error fetching weather data. Please try again.', false, true);
+                        console.error('Weather API Error:', error);
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = '🌍 Get Weather by Location';
+                    }
+                },
+                function(error) {
+                    btn.disabled = false;
+                    btn.innerHTML = '🌍 Get Weather by Location';
+                    
+                    let errorMsg = 'Location access denied.';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = 'Location access denied by user.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = 'Location information unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = 'Location request timed out.';
+                            break;
+                    }
+                    addMessage(errorMsg, false, true);
+                }
+            );
+        }
+
+        async function getForecast() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+
+            try {
+                let requestBody = {};
+                let locationText = '';
+
+                // Use GPS coordinates if available, otherwise use city
+                if (currentLocation.lat && currentLocation.lon) {
+                    requestBody = {
+                        lat: currentLocation.lat,
+                        lon: currentLocation.lon
+                    };
+                    locationText = 'your location';
+                } else {
+                    const city = document.getElementById('cityInput').value.trim() || currentLocation.city;
+                    if (!city) {
+                        addMessage('Please enter a city name or get weather by location first.', false, true);
+                        return;
+                    }
+                    requestBody = { location: city };
+                    locationText = city;
+                }
+
+                addMessage(`Getting 3-day forecast for ${locationText}...`, true);
+                showLoading();
+
+                const response = await fetch('/get_forecast', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+                hideLoading();
+
+                if (data.forecastData) {
+                    updateForecastWidget(data.forecastData);
+                }
+
+                addMessage(data.answer);
+                
+            } catch (error) {
+                hideLoading();
+                addMessage('Error fetching forecast data. Please try again.', false, true);
+                console.error('Forecast API Error:', error);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📈 Get 3-Day Forecast';
+            }
+        }
+
+        function updateWeatherWidget(weatherData, location) {
+            const weatherDisplay = document.getElementById('weatherDisplay');
+            const icon = getWeatherIcon(weatherData.description);
+            
+            weatherDisplay.innerHTML = `
+                <div class="weather-main">
+                    <div>
+                        <div class="weather-temp">${weatherData.temp}°C</div>
+                        <div class="weather-desc">${weatherData.description}</div>
+                    </div>
+                    <div class="weather-icon">${icon}</div>
+                </div>
+                <div class="weather-details">
+                    <span>💧 ${weatherData.humidity}%</span>
+                    <span>💨 ${weatherData.wind_speed} m/s</span>
+                </div>
+                <div style="font-size: 0.9rem; margin-top: 8px; opacity: 0.9;">📍 ${location}</div>
+            `;
+            
+            weatherDisplay.style.display = 'block';
+        }
+
+        function updateForecastWidget(forecastData) {
+            const forecastDisplay = document.getElementById('forecastDisplay');
+            
+            let cardsHtml = '<div class="section-title">📈 3-Day Forecast</div><div class="forecast-cards">';
+            
+            Object.entries(forecastData).forEach(([date, data]) => {
+                const icon = getWeatherIcon(data.condition);
+                const formattedDate = formatDate(date);
+                
+                cardsHtml += `
+                    <div class="forecast-card">
+                        <div class="forecast-date">${formattedDate}</div>
+                        <div class="forecast-icon">${icon}</div>
+                        <div class="forecast-temp">${data.avg_temp}°C</div>
+                        <div class="forecast-condition">${data.condition}</div>
+                    </div>
+                `;
+            });
+            
+            cardsHtml += '</div>';
+            forecastDisplay.innerHTML = cardsHtml;
+            forecastDisplay.style.display = 'block';
+        }
+
+        // Chat Functions
         async function sendMessage() {
             const userInput = document.getElementById('userInput');
             const message = userInput.value.trim();
             
-            if (message) {
-                addMessage(message, true);
-                userInput.value = '';
-                showLoading();
+            if (!message) return;
 
-                try {
-                    const formData = new FormData();
-                    formData.append('messageText', message);
-                    
-                    // Add weather data to the context if available
-                    if (currentWeatherData) {
-                        formData.append('weatherData', JSON.stringify(currentWeatherData));
-                    }
-
-                    const response = await fetch('/ask', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    const data = await response.json();
-                    hideLoading();
-                    addMessage(data.answer);
-                    
-                    // Update chat history after sending a message
-                    loadChatHistory();
-                } catch (error) {
-                    hideLoading();
-                    addMessage('Sorry, there was an error processing your request. Please try again.');
-                    console.error('Error:', error);
-                }
-            }
-        }
-
-        async function sendQuickMessage(topic) {
-            addMessage(topic, true);
+            addMessage(message, true);
+            userInput.value = '';
             showLoading();
-            
+
             try {
                 const formData = new FormData();
-                formData.append('messageText', topic);
+                formData.append('messageText', message);
                 
-                // Add weather data to the context if available
+                // Add weather data to context if available
                 if (currentWeatherData) {
                     formData.append('weatherData', JSON.stringify(currentWeatherData));
+                }
+                
+                // Add farm details to context if available
+                if (currentFarmDetails) {
+                    formData.append('farmDetails', JSON.stringify(currentFarmDetails));
                 }
 
                 const response = await fetch('/ask', {
@@ -730,198 +1166,75 @@
                 hideLoading();
                 addMessage(data.answer);
                 
-                // Update chat history
-                loadChatHistory();
             } catch (error) {
                 hideLoading();
-                addMessage('Sorry, there was an error processing your request. Please try again.');
-                console.error('Error:', error);
+                addMessage('Sorry, there was an error processing your request. Please try again.', false, true);
+                console.error('Chat API Error:', error);
             }
         }
 
-        async function getWeather() {
-            // Try to use saved location first
-            let location = document.getElementById('location').value;
-            
-            // If no saved location, prompt user
-            if (!location) {
-                location = prompt("🌍 Enter your location for weather updates:");
-            }
-
-            if (!location) {
-                addMessage("❌ No location provided.", false);
-                return;
-            }
-
-            addMessage(`Fetching weather for 🌍 ${location}...`, false);
+        async function sendQuickMessage(message) {
+            addMessage(message, true);
             showLoading();
-
+            
             try {
-                const response = await fetch('/get_weather', {
+                const formData = new FormData();
+                formData.append('messageText', message);
+                
+                // Add weather data to context if available
+                if (currentWeatherData) {
+                    formData.append('weatherData', JSON.stringify(currentWeatherData));
+                }
+                
+                // Add farm details to context if available
+                if (currentFarmDetails) {
+                    formData.append('farmDetails', JSON.stringify(currentFarmDetails));
+                }
+
+                const response = await fetch('/ask', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ location })
+                    body: formData
                 });
 
                 const data = await response.json();
                 hideLoading();
-                addMessage(data.answer, false);
+                addMessage(data.answer);
                 
-                // Store weather data for context in future queries
-                if (data.weatherData) {
-                    currentWeatherData = data.weatherData;
-                    
-                    // Show weather indicator
-                    const weatherDisplay = document.getElementById('weatherDisplay');
-                    weatherDisplay.style.display = 'block';
-                    
-                    // Update weather widget with actual data
-                    weatherDisplay.querySelector('.weather-temp').textContent = `${currentWeatherData.temp}°C`;
-                    weatherDisplay.querySelector('.weather-desc').textContent = `${location}: ${currentWeatherData.description}`;
-                    
-                    // Set appropriate weather icon based on description
-                    let weatherIcon = '☁️';
-                    const desc = currentWeatherData.description.toLowerCase();
-                    
-                    if (desc.includes('rain')) weatherIcon = '🌧️';
-                    else if (desc.includes('cloud')) weatherIcon = '☁️';
-                    else if (desc.includes('sun') || desc.includes('clear')) weatherIcon = '☀️';
-                    else if (desc.includes('snow')) weatherIcon = '❄️';
-                    else if (desc.includes('thunder')) weatherIcon = '⛈️';
-                    
-                    weatherDisplay.querySelector('.weather-icon').textContent = weatherIcon;
-                }
             } catch (error) {
                 hideLoading();
-                addMessage("❌ Error fetching weather data.", false);
-                console.error("Weather API Error:", error);
+                addMessage('Sorry, there was an error processing your request. Please try again.', false, true);
+                console.error('Quick Message Error:', error);
             }
         }
 
-        async function saveFarmDetails() {
-            if (!validateFarmDetails()) {
-                alert('Please fill in all required fields');
-                return;
-            }
-
-            const farmerDetails = {
-                location: document.getElementById('location').value,
-                landSize: document.getElementById('land-size').value,
-                soilType: document.getElementById('soil-type').value,
-                irrigationMethod: document.getElementById('irrigation').value,
-                waterSource: document.getElementById('water-source').value
-            };
-
-            try {
-                const response = await fetch('/store_farmer_details', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(farmerDetails)
-                });
-
-                const data = await response.json();
-                alert(data.message || 'Farm details saved successfully!');
-                
-                // Store details locally for persistence
-                storeFarmDetailsLocally(farmerDetails);
-                
-                // Automatically fetch weather for the farm location
-                getWeather();
-                
-                addMessage("Farm details updated successfully! I'll provide personalized recommendations based on your farm details. 🌱", false);
-            } catch (error) {
-                alert('Error saving farm details. Please try again.');
-                console.error('Error:', error);
-            }
-        }
-        
-        async function loadChatHistory() {
-            try {
-                const res = await fetch('/chat_history');
-                const data = await res.json();
-                const container = document.getElementById('chatHistoryList');
-                container.innerHTML = '';
-
-                if (data.chat_history.length === 0) {
-                    container.innerHTML = '<p style="padding: 15px; color: var(--text-secondary);">No chat history yet</p>';
-                    return;
-                }
-
-                data.chat_history.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'chat-history-item';
-                    
-                    // Create a truncated version for display
-                    const question = item[2].length > 40 ? item[2].substring(0, 40) + '...' : item[2];
-                    const answer = item[3].length > 60 ? item[3].substring(0, 60) + '...' : item[3];
-                    
-                    div.innerHTML = `
-                        <div class="question">${question}</div>
-                        <div class="answer">${answer}</div>
-                    `;
-                    
-                    // Add click event to load this conversation
-                    div.addEventListener('click', () => {
-                        addMessage(item[2], true);
-                        addMessage(item[3], false);
-                    });
-                    
-                    container.appendChild(div);
-                });
-            } catch (error) {
-                console.error('Error loading history:', error);
-            }
-        }
-
-        function validateFarmDetails() {
-            const requiredFields = ['location', 'land-size', 'soil-type', 'irrigation', 'water-source'];
-            let isValid = true;
-
-            requiredFields.forEach(field => {
-                const element = document.getElementById(field);
-                if (!element.value) {
-                    element.style.borderColor = 'red';
-                    isValid = false;
-                } else {
-                    element.style.borderColor = '';
-                }
-            });
-
-            return isValid;
-        }
-        
-        // Request farm-specific advice based on saved details
-        function requestFarmSpecificAdvice() {
-            const location = document.getElementById('location').value;
-            const soilType = document.getElementById('soil-type').value;
-            const irrigationMethod = document.getElementById('irrigation').value;
-            
-            if (!location || !soilType || !irrigationMethod) {
-                addMessage("Please complete your farm profile in the Farm Details section first to get personalized advice.", false);
+        // Request personalized advice based on farm details
+        function requestPersonalizedAdvice() {
+            if (!currentFarmDetails) {
+                addMessage('Please save your farm details first to get personalized recommendations!', false);
                 return;
             }
             
-            const query = `Based on my ${soilType} soil farm in ${location} using ${irrigationMethod} irrigation, what are the best crops to plant right now and what farming practices would you recommend?`;
+            const { location, landSize, soilType, irrigationMethod, waterSource } = currentFarmDetails;
+            const message = `Based on my ${landSize} acre farm in ${location} with ${soilType} soil using ${irrigationMethod} irrigation and ${waterSource} as water source, what specific crops and farming practices would you recommend for optimal results?`;
             
-            addMessage(query, true);
-            sendQuickMessage(query);
+            sendQuickMessage(message);
         }
 
-        // Event Listeners
-        document.getElementById('userInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
+        // Initialize the app
+        function initApp() {
+            // Auto-focus input
+            document.getElementById('userInput').focus();
+            
+            // Add some helpful startup messages
+            setTimeout(() => {
+                if (!currentFarmDetails) {
+                    addMessage('Welcome to Vayazh AI! 🌾 Please fill in your farm details in the sidebar to get personalized agricultural recommendations. You can also use the weather tools or ask me any farming questions!');
+                } 
+            }, 1000);
+        }
 
-        // Reset validation styling on input
-        document.querySelectorAll('.form-group input, .form-group select').forEach(element => {
-            element.addEventListener('input', function() {
-                this.style.borderColor = '';
-            });
-        });
+        // Call init when page loads
+        window.addEventListener('load', initApp);
     </script>
 </body>
 </html>
