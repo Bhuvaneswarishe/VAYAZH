@@ -32,8 +32,6 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
  API Keys Required
 OpenWeatherMap API Key for weather updates
-
-Gemini API Key for AI interactions (use the Google Generative AI key)
-run python app.py after setting apis in .env file 
+Groq - llama model for Ai Generation
 
 
