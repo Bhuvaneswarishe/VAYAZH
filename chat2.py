@@ -1,47 +1,42 @@
-import google.generativeai as genai
+# chat2.py
+
+import os
+from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
-from langchain.schema import BaseMessage, HumanMessage
-from langchain_core.language_models import LLM
-from typing import List
-import os
+from langchain_groq import ChatGroq  # Groq LLM wrapper
 
-# Configure Gemini API
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# ✅ Load environment variables from .env file
+load_dotenv()
 
-# ✅ Make GeminiLLM a LangChain-compatible LLM
-class GeminiLLM(LLM):
-    model: str = "gemini-2.0-flash"
+# ✅ Read Groq API key from environment
+groq_api_key = os.getenv("GROQ_API_KEY")
 
-    def _call(self, prompt: str, stop=None) -> str:
-        response = genai.GenerativeModel(self.model).generate_content(prompt)
-        return response.text.strip() if hasattr(response, "text") else "I'm unable to provide an answer at the moment."
+if not groq_api_key:
+    raise ValueError("❌ GROQ_API_KEY is not set. Please check your .env file.")
 
-    def invoke(self, input_text: str) -> str:
-        return self._call(input_text)
+# ✅ Initialize Groq LLM with the specified model
+llm = ChatGroq(
+    api_key=groq_api_key,
+    model_name="meta-llama/llama-4-scout-17b-16e-instruct"
+)
 
-    @property
-    def _llm_type(self) -> str:
-        return "custom"
-
-# Create an instance of the Gemini model wrapped in LangChain's format
-llm = GeminiLLM()
-
-# ✅ Fix `setup_retrieval_qa` to work with the new LLM
+# ✅ Setup RetrievalQA with a custom prompt
 def setup_retrieval_qa(db):
     retriever = db.as_retriever(similarity_score_threshold=0.6)
 
     prompt_template = """Your name is VAYAZH. You are an expert in Agriculture. 
-Provide short and brief with practical advice  
+Provide short and brief practical advice. 
 If you don't know the answer, simply respond with 'Don't know.'
 
 CONTEXT: {context}
 QUESTION: {question}"""
 
+    PROMPT = PromptTemplate(
+        template=prompt_template,
+        input_variables=["context", "question"]
+    )
 
-    PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
-
-    # Initialize the RetrievalQA chain with LangChain-compatible Gemini model
     chain = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type='stuff',
