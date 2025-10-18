@@ -131,14 +131,6 @@
             background-color: var(--secondary-color);
         }
 
-        .weather-btn.forecast {
-            background-color: #6f42c1;
-        }
-
-        .weather-btn.forecast:hover {
-            background-color: #5a2d91;
-        }
-
         /* Weather Display Widget */
         #weatherDisplay {
             background: linear-gradient(135deg, #74b9ff, #0984e3);
@@ -176,51 +168,6 @@
             justify-content: space-between;
             font-size: 0.9rem;
             opacity: 0.9;
-        }
-
-        /* Forecast Display Widget */
-        #forecastDisplay {
-            display: none;
-            margin-bottom: 20px;
-        }
-
-        .forecast-cards {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-        }
-
-        .forecast-card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px;
-            min-width: 100px;
-            text-align: center;
-            box-shadow: var(--shadow);
-            flex-shrink: 0;
-        }
-
-        .forecast-date {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-        }
-
-        .forecast-icon {
-            font-size: 2rem;
-            margin: 5px 0;
-        }
-
-        .forecast-temp {
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-
-        .forecast-condition {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-top: 5px;
         }
 
         /* Main Chat Area */
@@ -417,10 +364,6 @@
 
             .weather-controls {
                 flex-direction: column;
-            }
-
-            .forecast-cards {
-                justify-content: center;
             }
 
             .message {
@@ -640,17 +583,10 @@
                         <button class="weather-btn secondary" onclick="getLocation()">
                             🌍 Get Weather by Location
                         </button>
-                        
-                        <button class="weather-btn forecast" onclick="getForecast()">
-                            📈 Get 3-Day Forecast
-                        </button>
                     </div>
 
                     <!-- Weather Display Widget -->
                     <div id="weatherDisplay"></div>
-
-                    <!-- Forecast Display Widget -->
-                    <div id="forecastDisplay"></div>
                 </div>
             </div>
         </div>
@@ -800,9 +736,6 @@
                     currentFarmDetails = farmDetails;
                     showNotification(data.message || 'Farm details saved successfully!');
                     
-                    // Also save to local storage for persistence
-                    localStorage.setItem('farmDetails', JSON.stringify(farmDetails));
-                    
                     // Add success message to chat
                     addMessage('✅ Farm details updated successfully! I can now provide personalized recommendations based on your farm profile.', false);
                 } else {
@@ -820,17 +753,9 @@
 
         function loadSavedFarmDetails() {
             try {
-                const saved = localStorage.getItem('farmDetails');
-                if (saved) {
-                    const details = JSON.parse(saved);
-                    currentFarmDetails = details;
-                    
-                    // Populate form fields (excluding location)
-                    document.getElementById('landSize').value = details.landSize || '';
-                    document.getElementById('soilType').value = details.soilType || '';
-                    document.getElementById('irrigationMethod').value = details.irrigationMethod || '';
-                    document.getElementById('waterSource').value = details.waterSource || '';
-                }
+                // Note: Not using localStorage as per artifact restrictions
+                // Farm details will need to be re-entered each session
+                // or loaded from backend
             } catch (error) {
                 console.error('Error loading saved farm details:', error);
             }
@@ -845,25 +770,6 @@
                 });
             });
         }
-
-        // Wait for DOM to load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Auto-focus input field
-            document.getElementById('userInput').focus();
-            
-            // Add enter key support for inputs
-            document.getElementById('userInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
-            });
-            
-            document.getElementById('cityInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    getWeather();
-                }
-            });
-        });
 
         // Utility Functions
         function showLoading() {
@@ -911,12 +817,6 @@
             if (desc.includes('wind')) return '💨';
             
             return '🌤️'; // Default
-        }
-
-        function formatDate(dateStr) {
-            const date = new Date(dateStr);
-            const options = { month: 'short', day: 'numeric' };
-            return date.toLocaleDateString('en-US', options);
         }
 
         // Weather Functions
@@ -1032,60 +932,6 @@
             );
         }
 
-        async function getForecast() {
-            const btn = event.target;
-            btn.disabled = true;
-            btn.textContent = 'Loading...';
-
-            try {
-                let requestBody = {};
-                let locationText = '';
-
-                // Use GPS coordinates if available, otherwise use city
-                if (currentLocation.lat && currentLocation.lon) {
-                    requestBody = {
-                        lat: currentLocation.lat,
-                        lon: currentLocation.lon
-                    };
-                    locationText = 'your location';
-                } else {
-                    const city = document.getElementById('cityInput').value.trim() || currentLocation.city;
-                    if (!city) {
-                        addMessage('Please enter a city name or get weather by location first.', false, true);
-                        return;
-                    }
-                    requestBody = { location: city };
-                    locationText = city;
-                }
-
-                addMessage(`Getting 3-day forecast for ${locationText}...`, true);
-                showLoading();
-
-                const response = await fetch('/get_forecast', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody)
-                });
-
-                const data = await response.json();
-                hideLoading();
-
-                if (data.forecastData) {
-                    updateForecastWidget(data.forecastData);
-                }
-
-                addMessage(data.answer);
-                
-            } catch (error) {
-                hideLoading();
-                addMessage('Error fetching forecast data. Please try again.', false, true);
-                console.error('Forecast API Error:', error);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '📈 Get 3-Day Forecast';
-            }
-        }
-
         function updateWeatherWidget(weatherData, location) {
             const weatherDisplay = document.getElementById('weatherDisplay');
             const icon = getWeatherIcon(weatherData.description);
@@ -1106,30 +952,6 @@
             `;
             
             weatherDisplay.style.display = 'block';
-        }
-
-        function updateForecastWidget(forecastData) {
-            const forecastDisplay = document.getElementById('forecastDisplay');
-            
-            let cardsHtml = '<div class="section-title">📈 3-Day Forecast</div><div class="forecast-cards">';
-            
-            Object.entries(forecastData).forEach(([date, data]) => {
-                const icon = getWeatherIcon(data.condition);
-                const formattedDate = formatDate(date);
-                
-                cardsHtml += `
-                    <div class="forecast-card">
-                        <div class="forecast-date">${formattedDate}</div>
-                        <div class="forecast-icon">${icon}</div>
-                        <div class="forecast-temp">${data.avg_temp}°C</div>
-                        <div class="forecast-condition">${data.condition}</div>
-                    </div>
-                `;
-            });
-            
-            cardsHtml += '</div>';
-            forecastDisplay.innerHTML = cardsHtml;
-            forecastDisplay.style.display = 'block';
         }
 
         // Chat Functions
